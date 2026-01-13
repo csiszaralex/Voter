@@ -15,7 +15,7 @@ export function LoginForm({ onJoin }: { onJoin: (name: string) => void }) {
     <div className='flex min-h-dvh w-full items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-900'>
       <Card className='w-full max-w-md'>
         <CardHeader>
-          <CardTitle className='text-center'>Belépés az ülésre</CardTitle>
+          <CardTitle className='text-center'>Belépés a szavazásra</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className='flex flex-col gap-4'>

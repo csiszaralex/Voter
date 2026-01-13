@@ -2,9 +2,7 @@ version: "2.4"
 
 services:
   backend:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
+    image: ghcr.io/csiszaralex/Voter-backend:latest
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -14,9 +12,7 @@ services:
     restart: always
 
   frontend:
-    build:
-      context: .
-      dockerfile: apps/frontend/Dockerfile
+    image: ghcr.io/csiszaralex/Voter-frontend:latest
     depends_on:
       - backend
     networks:
@@ -33,6 +29,7 @@ services:
       - "traefik.http.routers.voter-app.tls.certresolver=myresolver"
       # Melyik porton hallgat a konténer BELÜL? (Az Nginxed a 80-ason van)
       - "traefik.http.services.voter-app.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy_network"
 
 networks:
   app-network:
