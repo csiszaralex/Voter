@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  HandType,
-  User,
-  VoteOption,
-  VoteResult,
-  VoteSession,
-} from '@repo/shared-types';
+import { HandType, User, VoteOption, VoteResult, VoteSession } from '@repo/shared-types';
 
 @Injectable()
 export class AppService {
@@ -75,9 +69,7 @@ export class AppService {
 
   clearReactions(targetUsername?: string) {
     if (targetUsername) {
-      const user = Array.from(this.users.values()).find(
-        (u) => u.username === targetUsername,
-      );
+      const user = Array.from(this.users.values()).find((u) => u.username === targetUsername);
       if (user) user.reaction = null;
     } else {
       this.users.forEach((u) => (u.reaction = null));
@@ -105,15 +97,11 @@ export class AppService {
   // --- Voting ---
 
   startVote(isAnonymous: boolean) {
-    const adminCount = Array.from(this.users.values()).filter(
-      (u) => u.isAdmin,
-    ).length;
+    const adminCount = Array.from(this.users.values()).filter((u) => u.isAdmin).length;
     const voterCount = this.users.size - adminCount;
 
     if (voterCount < 1) {
-      throw new Error(
-        'Nincs jelen szavazóképes felhasználó, így nem indítható szavazás.',
-      );
+      throw new Error('Nincs jelen szavazóképes felhasználó, így nem indítható szavazás.');
     }
     this.voteConfig = { isActive: true, isAnonymous };
     this.votes.clear();
@@ -136,9 +124,7 @@ export class AppService {
   }
 
   getVoteSession(): VoteSession {
-    const adminCount = Array.from(this.users.values()).filter(
-      (u) => u.isAdmin,
-    ).length;
+    const adminCount = Array.from(this.users.values()).filter((u) => u.isAdmin).length;
     return {
       isActive: this.voteConfig.isActive,
       isAnonymous: this.voteConfig.isAnonymous,

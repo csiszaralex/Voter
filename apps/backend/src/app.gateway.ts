@@ -35,17 +35,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const username = client.handshake.query.username as string;
       if (!username) {
-        this.logger.warn(
-          `Connection attempt without username (clientId=${client.id})`,
-        );
+        this.logger.warn(`Connection attempt without username (clientId=${client.id})`);
         client.disconnect();
         return;
       }
 
       const user = this.appService.joinUser(client.id, username);
-      this.logger.log(
-        `User connected: ${user.username} (clientId=${client.id})`,
-      );
+      this.logger.log(`User connected: ${user.username} (clientId=${client.id})`);
 
       // Csak az új usernek visszajelzés, hogy sikerült (opcionális)
       client.emit('welcome', { user });
@@ -84,20 +80,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('raise_hand')
-  handleRaiseHand(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: RaiseHandDto,
-  ) {
+  handleRaiseHand(@ConnectedSocket() client: Socket, @MessageBody() data: RaiseHandDto) {
     this.logger.log(`Toggling hand (${data.type}) for clientId=${client.id}`);
     this.appService.toggleHand(client.id, data.type);
     this.broadcastState();
   }
 
   @SubscribeMessage('cast_vote')
-  handleCastVote(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: CastVoteDto,
-  ) {
+  handleCastVote(@ConnectedSocket() client: Socket, @MessageBody() data: CastVoteDto) {
     this.logger.log(`Casting vote for clientId=${client.id}`);
     this.appService.castVote(client.id, data.vote);
     client.emit('vote_accepted');
@@ -121,31 +111,22 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('admin_clear_reactions')
   handleClearReactions(@MessageBody() data: { targetUsername?: string }) {
-    this.logger.log(
-      `Admin clearing reactions for ${data.targetUsername ?? 'all users'}`,
-    );
+    this.logger.log(`Admin clearing reactions for ${data.targetUsername ?? 'all users'}`);
     this.appService.clearReactions(data.targetUsername);
     this.broadcastState();
   }
 
   @SubscribeMessage('admin_lower_hand')
   handleAdminLowerHand(@MessageBody() data: AdminLowerHandDto) {
-    this.logger.log(
-      `Admin lowering hand (${data.type}) for targetId=${data.targetId}`,
-    );
+    this.logger.log(`Admin lowering hand (${data.type}) for targetId=${data.targetId}`);
     this.appService.toggleHand(data.targetId, data.type, true);
     this.broadcastState();
   }
 
   @SubscribeMessage('start_vote')
-  handleStartVote(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: StartVoteDto,
-  ) {
+  handleStartVote(@ConnectedSocket() client: Socket, @MessageBody() data: StartVoteDto) {
     try {
-      this.logger.log(
-        `Starting vote (isAnonymous=${data.isAnonymous}) by clientId=${client.id}`,
-      );
+      this.logger.log(`Starting vote (isAnonymous=${data.isAnonymous}) by clientId=${client.id}`);
       this.appService.startVote(data.isAnonymous);
       this.server.emit('vote_started', { isAnonymous: data.isAnonymous });
       this.broadcastState();
