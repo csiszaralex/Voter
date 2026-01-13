@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HandType, User, VoteOption, VoteResult, VoteSession } from '@repo/shared-types';
+import { AppConfigService } from './configs/app-config.service';
 
 @Injectable()
 export class AppService {
@@ -12,7 +12,7 @@ export class AppService {
     isAnonymous: false,
   };
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: AppConfigService) {}
 
   // --- User Management ---
 
@@ -26,7 +26,7 @@ export class AppService {
       throw new Error('Ez a név már foglalt!');
     }
 
-    const admins = (this.configService.get<string>('ADMINS') || '')
+    const admins = (this.configService.get('ADMINS') ?? '')
       .split(',')
       .map((a) => a.trim().toLowerCase());
     const isAdmin = admins.includes(username.toLowerCase());
