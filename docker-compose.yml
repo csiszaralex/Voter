@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   backend:
-    image: ghcr.io/csiszaralex/Voter-backend:latest
+    image: ghcr.io/csiszaralex/voter-backend:latest
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -12,7 +12,7 @@ services:
     restart: always
 
   frontend:
-    image: ghcr.io/csiszaralex/Voter-frontend:latest
+    image: ghcr.io/csiszaralex/voter-frontend:latest
     depends_on:
       - backend
     networks:
