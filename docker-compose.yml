@@ -8,7 +8,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - ADMINS=Viktor,Admin
+      - ADMINS=Viktor,Admin,Nori,Nóri
     networks:
       - app-network
     restart: always
@@ -17,14 +17,25 @@ services:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-    ports:
-      - "80:80"
     depends_on:
       - backend
     networks:
       - app-network
+      - proxy-network
     restart: always
+    labels:
+      - "traefik.enable=true"
+      # Router szabály: Milyen domainre figyeljen?
+      - "traefik.http.routers.voter-app.rule=Host(`vote.csalex.dev`)"
+      # Melyik belépési ponton? (HTTPS)
+      - "traefik.http.routers.voter-app.entrypoints=websecure"
+      # Használja a Let's Encrypt feloldót (amit a traefikben 'myresolver'-nek neveztünk)
+      - "traefik.http.routers.voter-app.tls.certresolver=myresolver"
+      # Melyik porton hallgat a konténer BELÜL? (Az Nginxed a 80-ason van)
+      - "traefik.http.services.voter-app.loadbalancer.server.port=80"
 
 networks:
   app-network:
     driver: bridge
+  proxy_network:
+    external: true
