@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'; // Shadcn komponens
 import type { VoteOption, VoteSession } from '@repo/shared-types';
-import { useState } from 'react';
 
 interface VotingModalProps {
   session: VoteSession | null;
@@ -17,7 +16,6 @@ interface VotingModalProps {
 
 export function VotingModal({ session, hasVoted, onVote }: VotingModalProps) {
   const isOpen = session?.isActive && !hasVoted;
-  // const [hasLocallyVoted, setHasLocallyVoted] = useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>

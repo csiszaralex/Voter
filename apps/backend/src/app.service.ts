@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   HandType,
@@ -29,11 +29,13 @@ export class AppService {
     );
 
     if (isTaken) {
-      throw new ConflictException('Ez a név már foglalt!');
+      throw new Error('Ez a név már foglalt!');
     }
 
-    const admins = this.configService.get<string>('ADMINS')?.split(',') || [];
-    const isAdmin = admins.includes(username);
+    const admins = (this.configService.get<string>('ADMINS') || '')
+      .split(',')
+      .map((a) => a.trim().toLowerCase());
+    const isAdmin = admins.includes(username.toLowerCase());
 
     const newUser: User = {
       id: socketId,
@@ -103,8 +105,24 @@ export class AppService {
   // --- Voting ---
 
   startVote(isAnonymous: boolean) {
+    const adminCount = Array.from(this.users.values()).filter(
+      (u) => u.isAdmin,
+    ).length;
+    const voterCount = this.users.size - adminCount;
+
+    if (voterCount < 1) {
+      throw new Error(
+        'Nincs jelen szavazóképes felhasználó, így nem indítható szavazás.',
+      );
+    }
     this.voteConfig = { isActive: true, isAnonymous };
     this.votes.clear();
+  }
+
+  stopVote() {
+    this.voteConfig.isActive = false;
+    // Az adatokat NEM töröljük, hogy a 'vote_result' még lekérhető legyen
+    // Csak új szavazás indításakor (startVote) törlünk
   }
 
   castVote(socketId: string, vote: VoteOption) {

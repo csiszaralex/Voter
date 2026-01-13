@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -24,6 +25,7 @@ import { AppService } from './app.service';
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
+  logger = new Logger('AppGateway');
 
   constructor(private readonly appService: AppService) {}
 
@@ -33,57 +35,50 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const username = client.handshake.query.username as string;
       if (!username) {
+        this.logger.warn(
+          `Connection attempt without username (clientId=${client.id})`,
+        );
         client.disconnect();
         return;
       }
 
       const user = this.appService.joinUser(client.id, username);
-      console.log(`User connected: ${user.username}`);
+      this.logger.log(
+        `User connected: ${user.username} (clientId=${client.id})`,
+      );
 
       // Csak az új usernek visszajelzés, hogy sikerült (opcionális)
       client.emit('welcome', { user });
 
       this.broadcastState();
     } catch (error) {
-      if (!(error instanceof Error)) {
-        throw error;
-      }
-      console.error(error.message);
+      this.logger.error(
+        `Error during handleConnection for clientId=${client.id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       client.emit('error', { message: error.message });
-      client.disconnect();
+      setTimeout(() => client.disconnect(), 1000);
     }
   }
 
   handleDisconnect(client: Socket) {
+    this.logger.log(`Client disconnected (clientId=${client.id})`);
     this.appService.removeUser(client.id);
     this.broadcastState();
   }
 
   // --- Helper: Broadcast state to everyone ---
   private broadcastState() {
-    // 1. User lista frissítése
     this.server.emit('state_update', this.appService.getAllUsers());
-
-    // 2. Szavazás státusz frissítése
-    const voteSession = this.appService.getVoteSession();
-    this.server.emit('vote_status_update', voteSession);
-
-    // 3. Ha mindenki szavazott, küldjük az eredményt
-    if (
-      voteSession.isActive &&
-      voteSession.totalVoters > 0 &&
-      voteSession.currentVotes === voteSession.totalVoters
-    ) {
-      this.server.emit('vote_result', this.appService.getVoteResults());
-      // Opcionális: itt le is zárhatjuk automatikusan a szavazást
-      // this.appService.startVote(false); // vagy külön flag, hogy vége
-    }
+    this.server.emit('vote_status_update', this.appService.getVoteSession());
   }
 
   // --- User Handlers ---
 
   @SubscribeMessage('toggle_reaction')
   handleReaction(@ConnectedSocket() client: Socket) {
+    this.logger.log(`Toggling reaction for clientId=${client.id}`);
     this.appService.toggleReaction(client.id);
     this.broadcastState();
   }
@@ -93,6 +88,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: RaiseHandDto,
   ) {
+    this.logger.log(`Toggling hand (${data.type}) for clientId=${client.id}`);
     this.appService.toggleHand(client.id, data.type);
     this.broadcastState();
   }
@@ -102,7 +98,21 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: CastVoteDto,
   ) {
+    this.logger.log(`Casting vote for clientId=${client.id}`);
     this.appService.castVote(client.id, data.vote);
+    client.emit('vote_accepted');
+    const voteSession = this.appService.getVoteSession();
+
+    if (
+      voteSession.isActive &&
+      voteSession.totalVoters > 0 &&
+      voteSession.currentVotes === voteSession.totalVoters
+    ) {
+      this.logger.log('All votes received, auto-closing session');
+      const results = this.appService.getVoteResults();
+      this.appService.stopVote();
+      this.server.emit('vote_result', results);
+    }
     this.broadcastState();
   }
 
@@ -111,21 +121,55 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('admin_clear_reactions')
   handleClearReactions(@MessageBody() data: { targetUsername?: string }) {
+    this.logger.log(
+      `Admin clearing reactions for ${data.targetUsername ?? 'all users'}`,
+    );
     this.appService.clearReactions(data.targetUsername);
     this.broadcastState();
   }
 
   @SubscribeMessage('admin_lower_hand')
   handleAdminLowerHand(@MessageBody() data: AdminLowerHandDto) {
+    this.logger.log(
+      `Admin lowering hand (${data.type}) for targetId=${data.targetId}`,
+    );
     this.appService.toggleHand(data.targetId, data.type, true);
     this.broadcastState();
   }
 
   @SubscribeMessage('start_vote')
-  handleStartVote(@MessageBody() data: StartVoteDto) {
-    this.appService.startVote(data.isAnonymous);
-    // Külön eventet is küldhetünk, hogy "felugorjon" a modal
-    this.server.emit('vote_started', { isAnonymous: data.isAnonymous });
+  handleStartVote(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: StartVoteDto,
+  ) {
+    try {
+      this.logger.log(
+        `Starting vote (isAnonymous=${data.isAnonymous}) by clientId=${client.id}`,
+      );
+      this.appService.startVote(data.isAnonymous);
+      this.server.emit('vote_started', { isAnonymous: data.isAnonymous });
+      this.broadcastState();
+    } catch (e) {
+      this.logger.error(
+        `Error while starting vote by clientId=${client.id}`,
+        e instanceof Error ? e.stack : undefined,
+      );
+      // Itt küldjük vissza a hibát specifikusan annak, aki indította
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      client.emit('error', { message: e.message });
+    }
+  }
+
+  @SubscribeMessage('stop_vote')
+  handleStopVote() {
+    this.logger.log('Stopping vote manually and broadcasting results');
+    // Kényszerített lezárás és eredmény hirdetés
+    const results = this.appService.getVoteResults();
+    this.appService.stopVote(); // Ez átállítja az isActive-et false-ra
+
+    // Először kiküldjük az eredményt
+    this.server.emit('vote_result', results);
+    // Majd frissítjük a státuszt (hogy eltűnjön a modal)
     this.broadcastState();
   }
 }
