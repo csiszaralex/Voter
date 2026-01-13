@@ -1,12 +1,21 @@
 version: "2.4"
 
 services:
+  redis:
+    image: redis:alpine
+    restart: always
+    networks:
+      - app-network
   backend:
     image: ghcr.io/csiszaralex/voter-backend:latest
     environment:
       - NODE_ENV=production
       - PORT=3000
       - ADMINS=Viktor,Admin,Nori,Nóri
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
     networks:
       - app-network
     restart: always
