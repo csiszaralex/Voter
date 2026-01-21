@@ -36,6 +36,14 @@ function App() {
     }
   }, [lastVoteResult]);
 
+  useEffect(() => {
+    if (currentUser) {
+      document.title = `${currentUser.username} | Voter`;
+    } else {
+      document.title = 'Voter';
+    }
+  }, [currentUser]);
+
   const handleVote = (vote: VoteOption) => {
     socket.emit('cast_vote', { vote });
     // Itt egy lokális state-tel elrejthetjük a modalt, amíg a backend nem zárja le
