@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HandType, User, VoteOption, VoteResult, VoteSession } from '@repo/shared-types';
+import { HandType, User, UserRole, VoteOption, VoteResult, VoteSession } from '@repo/shared-types';
 import { AppConfigService } from './configs/app-config.service';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class AppService {
 
   // --- User Management ---
 
-  joinUser(socketId: string, username: string): User {
+  joinUser(socketId: string, username: string, role: UserRole): User {
     // Case-insensitive név ellenőrzés
     const isTaken = Array.from(this.users.values()).some(
       (u) => u.username.toLowerCase() === username.toLowerCase(),
@@ -26,15 +26,10 @@ export class AppService {
       throw new Error('Ez a név már foglalt!');
     }
 
-    const admins = (this.configService.get('ADMINS') ?? '')
-      .split(',')
-      .map((a) => a.trim().toLowerCase());
-    const isAdmin = admins.includes(username.toLowerCase());
-
     const newUser: User = {
       id: socketId,
       username,
-      isAdmin,
+      role,
       reaction: null,
       hands: { topicAt: null, replyAt: null },
     };
@@ -97,7 +92,7 @@ export class AppService {
   // --- Voting ---
 
   startVote(isAnonymous: boolean) {
-    const adminCount = Array.from(this.users.values()).filter((u) => u.isAdmin).length;
+    const adminCount = Array.from(this.users.values()).filter((u) => u.role === 'ADMIN').length;
     const voterCount = this.users.size - adminCount;
 
     if (voterCount < 1) {
@@ -117,14 +112,13 @@ export class AppService {
     if (!this.voteConfig.isActive) return;
 
     const user = this.users.get(socketId);
-    // Admin nem szavazhat (business logic döntés, kivehető ha kell)
-    if (user && !user.isAdmin) {
+    if (user && user.role === 'USER') {
       this.votes.set(socketId, vote);
     }
   }
 
   getVoteSession(): VoteSession {
-    const adminCount = Array.from(this.users.values()).filter((u) => u.isAdmin).length;
+    const adminCount = Array.from(this.users.values()).filter((u) => u.role !== 'USER').length;
     return {
       isActive: this.voteConfig.isActive,
       isAnonymous: this.voteConfig.isAnonymous,

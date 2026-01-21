@@ -34,6 +34,10 @@ function App() {
     // Itt egy lokális state-tel elrejthetjük a modalt, amíg a backend nem zárja le
   };
 
+  const isAdmin = currentUser.role === 'ADMIN';
+  const isGuest = currentUser.role === 'GUEST';
+  const isUser = currentUser.role === 'USER';
+
   return (
     <div className='min-h-dvh bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8 font-sans'>
       <ErrorDialog message={error} onClose={clearError} />
@@ -49,8 +53,9 @@ function App() {
                 <CardHeader className='flex flex-row items-center justify-between pb-2'>
                   <CardTitle className='text-lg'>
                     {currentUser.username}
-                    {currentUser.isAdmin && (
-                      <span className='ml-2 text-red-500 text-xs uppercase'>Admin</span>
+                    {isAdmin && <span className='ml-2 text-red-500 text-xs uppercase'>Admin</span>}
+                    {isGuest && (
+                      <span className='ml-2 text-zinc-500 text-xs uppercase'>Vendég</span>
                     )}
                   </CardTitle>
 
@@ -60,8 +65,8 @@ function App() {
                   </Button>
                 </CardHeader>
                 <CardContent className='space-y-4'>
-                  {/* User Actions */}
-                  {!currentUser.isAdmin && (
+                  {/* User & Guest Actions - Raise Hand allowed for both */}
+                  {(isUser || isGuest) && (
                     <div className='grid grid-cols-1 gap-3'>
                       <Button
                         variant={currentUser.hands.topicAt ? 'destructive' : 'default'}
@@ -81,19 +86,23 @@ function App() {
                         {currentUser.hands.replyAt ? 'Visszavonás' : 'Reagálnék (Válasz)'}
                       </Button>
 
-                      <Button
-                        variant={currentUser.reaction === 'LIKE' ? 'default' : 'outline'}
-                        onClick={() => socket.emit('toggle_reaction')}
-                      >
-                        <ThumbsUp
-                          className={`mr-2 h-4 w-4 ${currentUser.reaction === 'LIKE' ? 'fill-current' : ''}`}
-                        />
-                        Tudok dönteni
-                      </Button>
+                      {/* Reaction - Only for USER */}
+                      {isUser && (
+                        <Button
+                          variant={currentUser.reaction === 'LIKE' ? 'default' : 'outline'}
+                          onClick={() => socket.emit('toggle_reaction')}
+                        >
+                          <ThumbsUp
+                            className={`mr-2 h-4 w-4 ${currentUser.reaction === 'LIKE' ? 'fill-current' : ''}`}
+                          />
+                          Tudok dönteni
+                        </Button>
+                      )}
                     </div>
                   )}
+
                   {/* Admin Actions */}
-                  {currentUser.isAdmin && (
+                  {isAdmin && (
                     <div>
                       <div className='space-y-2'>
                         <h3 className='font-semibold text-sm text-zinc-500'>ADMIN TOOLS</h3>
@@ -149,11 +158,19 @@ function App() {
                     {users.map((u) => (
                       <Badge
                         key={u.id}
-                        variant={u.isAdmin ? 'default' : 'secondary'}
+                        variant={
+                          u.role === 'ADMIN'
+                            ? 'default'
+                            : u.role === 'GUEST'
+                              ? 'outline'
+                              : 'secondary'
+                        }
                         className='text-sm py-1 px-3'
                       >
                         {u.username}
                         {u.reaction === 'LIKE' && ' 👍'}
+                        {u.role === 'ADMIN' && ' (A)'}
+                        {u.role === 'GUEST' && ' (V)'}
                       </Badge>
                     ))}
                   </div>
@@ -175,7 +192,7 @@ function App() {
                 <CardContent>
                   <QueueList
                     users={users}
-                    isAdmin={currentUser.isAdmin}
+                    isAdmin={isAdmin}
                     onLowerHand={(id, type) =>
                       socket.emit('admin_lower_hand', { targetId: id, type })
                     }
@@ -225,7 +242,7 @@ function App() {
             </div>
           </div>
 
-          {!currentUser.isAdmin && (
+          {!isAdmin && !isGuest && (
             <VotingModal session={voteSession} hasVoted={hasVoted} onVote={handleVote} />
           )}
         </>
@@ -235,4 +252,3 @@ function App() {
 }
 
 export default App;
-

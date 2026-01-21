@@ -1,14 +1,31 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+} from '@/components/ui/select';
+import type { UserRole } from '@repo/shared-types';
 import { useState } from 'react';
 
-export function LoginForm({ onJoin }: { onJoin: (name: string) => void }) {
+const roles: { value: UserRole; label: string }[] = [
+  { value: 'USER', label: 'Résztvevő' },
+  { value: 'ADMIN', label: 'Adminisztrátor' },
+  { value: 'GUEST', label: 'Vendég' },
+];
+
+export function LoginForm({ onJoin }: { onJoin: (name: string, role: UserRole) => void }) {
   const [name, setName] = useState('');
+  const [role, setRole] = useState<UserRole>('USER');
+  const currentRoleLabel = roles.find((r) => r.value === role)?.label;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) onJoin(name);
+    if (name.trim()) onJoin(name, role);
   };
 
   return (
@@ -24,8 +41,25 @@ export function LoginForm({ onJoin }: { onJoin: (name: string) => void }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
-              className='text-base' // Mobilon ez megakadályozza az auto-zoomot (iOS feature 16px alatt)
+              className='text-base'
             />
+
+            <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
+              <SelectTrigger>
+                <span className='flex flex-1 text-left'>{currentRoleLabel}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Szerepkör</SelectLabel>
+                  {roles.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+
             <Button
               type='submit'
               disabled={!name}

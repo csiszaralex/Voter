@@ -1,5 +1,5 @@
 import { socket } from '@/lib/socket';
-import type { User, VoteResult, VoteSession } from '@repo/shared-types';
+import type { User, UserRole, VoteResult, VoteSession } from '@repo/shared-types';
 import { useEffect, useState } from 'react';
 
 export function useGameState() {
@@ -71,8 +71,8 @@ export function useGameState() {
     };
   }, []);
 
-  const join = (username: string) => {
-    socket.io.opts.query = { username };
+  const join = (username: string, role: UserRole) => {
+    socket.io.opts.query = { username, role };
     socket.connect();
   };
 

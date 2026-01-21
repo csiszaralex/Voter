@@ -1,3 +1,6 @@
+// User szerepkörök
+export type UserRole = 'USER' | 'ADMIN' | 'GUEST';
+
 export type VoteOption = 'IGEN' | 'NEM' | 'TARTOZKODOM';
 export type HandType = 'TOPIC' | 'REPLY';
 
@@ -10,7 +13,7 @@ export interface HandState {
 export interface User {
   id: string; // socket.id
   username: string;
-  isAdmin: boolean;
+  role: UserRole;
   reaction: 'LIKE' | null;
   hands: HandState;
 }
@@ -35,6 +38,7 @@ export interface VoteResult {
 // Client -> Server
 export interface JoinDto {
   username: string;
+  role: UserRole;
 }
 
 export interface RaiseHandDto {

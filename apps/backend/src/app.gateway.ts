@@ -1,19 +1,20 @@
 import { Logger } from '@nestjs/common';
 import {
-  ConnectedSocket,
-  MessageBody,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
+    ConnectedSocket,
+    MessageBody,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    SubscribeMessage,
+    WebSocketGateway,
+    WebSocketServer,
 } from '@nestjs/websockets';
 import type {
-  AdminLowerHandDto,
-  CastVoteDto,
-  RaiseHandDto,
-  StartVoteDto,
+    AdminLowerHandDto,
+    CastVoteDto,
+    RaiseHandDto,
+    StartVoteDto,
 } from '@repo/shared-types';
+import { UserRole } from '@repo/shared-types';
 import { Server, Socket } from 'socket.io';
 import { AppService } from './app.service';
 
@@ -34,13 +35,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: Socket) {
     try {
       const username = client.handshake.query.username as string;
+      const role = (client.handshake.query.role as UserRole) || 'USER';
+
       if (!username) {
         this.logger.warn(`Connection attempt without username (clientId=${client.id})`);
         client.disconnect();
         return;
       }
 
-      const user = this.appService.joinUser(client.id, username);
+      const user = this.appService.joinUser(client.id, username, role);
       this.logger.log(`User connected: ${user.username} (clientId=${client.id})`);
 
       // Csak az új usernek visszajelzés, hogy sikerült (opcionális)
