@@ -36,18 +36,14 @@ function App() {
     }
   }, [lastVoteResult]);
 
-  if (!isConnected || !currentUser) {
-    return <LoginForm onJoin={join} />;
-  }
-
   const handleVote = (vote: VoteOption) => {
     socket.emit('cast_vote', { vote });
     // Itt egy lokális state-tel elrejthetjük a modalt, amíg a backend nem zárja le
   };
 
-  const isAdmin = currentUser.role === 'ADMIN';
-  const isGuest = currentUser.role === 'GUEST';
-  const isUser = currentUser.role === 'USER';
+  const isAdmin = currentUser?.role === 'ADMIN';
+  const isGuest = currentUser?.role === 'GUEST';
+  const isUser = currentUser?.role === 'USER';
 
   return (
     <div className='min-h-dvh bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8 font-sans'>
