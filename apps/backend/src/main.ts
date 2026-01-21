@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { EarlyDataGuard } from './EarlyData.guard';
+import { EarlyDataGuard } from './earlyData.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

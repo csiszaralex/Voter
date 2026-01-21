@@ -92,8 +92,7 @@ export class AppService {
   // --- Voting ---
 
   startVote(isAnonymous: boolean) {
-    const adminCount = Array.from(this.users.values()).filter((u) => u.role === 'ADMIN').length;
-    const voterCount = this.users.size - adminCount;
+    const voterCount = Array.from(this.users.values()).filter((u) => u.role === 'USER').length;
 
     if (voterCount < 1) {
       throw new Error('Nincs jelen szavazóképes felhasználó, így nem indítható szavazás.');
@@ -118,11 +117,11 @@ export class AppService {
   }
 
   getVoteSession(): VoteSession {
-    const adminCount = Array.from(this.users.values()).filter((u) => u.role !== 'USER').length;
+    const voterCount = Array.from(this.users.values()).filter((u) => u.role === 'USER').length;
     return {
       isActive: this.voteConfig.isActive,
       isAnonymous: this.voteConfig.isAnonymous,
-      totalVoters: Math.max(0, this.users.size - adminCount),
+      totalVoters: Math.max(0, voterCount),
       currentVotes: this.votes.size,
     };
   }

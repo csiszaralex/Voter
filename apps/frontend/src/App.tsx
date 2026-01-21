@@ -375,9 +375,7 @@ function App() {
             </div>
           </div>
 
-          {!isAdmin && !isGuest && (
-            <VotingModal session={voteSession} hasVoted={hasVoted} onVote={handleVote} />
-          )}
+          {isUser && <VotingModal session={voteSession} hasVoted={hasVoted} onVote={handleVote} />}
         </>
       )}
     </div>

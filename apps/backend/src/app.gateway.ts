@@ -1,18 +1,18 @@
 import { Logger } from '@nestjs/common';
 import {
-    ConnectedSocket,
-    MessageBody,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
-    SubscribeMessage,
-    WebSocketGateway,
-    WebSocketServer,
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import type {
-    AdminLowerHandDto,
-    CastVoteDto,
-    RaiseHandDto,
-    StartVoteDto,
+  AdminLowerHandDto,
+  CastVoteDto,
+  RaiseHandDto,
+  StartVoteDto,
 } from '@repo/shared-types';
 import { UserRole } from '@repo/shared-types';
 import { Server, Socket } from 'socket.io';
@@ -35,7 +35,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: Socket) {
     try {
       const username = client.handshake.query.username as string;
-      const role = (client.handshake.query.role as UserRole) || 'USER';
+      const role = (client.handshake.query.role as UserRole) ?? 'USER';
 
       if (!username) {
         this.logger.warn(`Connection attempt without username (clientId=${client.id})`);
