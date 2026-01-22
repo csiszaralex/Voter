@@ -260,7 +260,7 @@ function App() {
 
             {/* RIGHT COLUMN: Queue & Results */}
             <div className='md:col-span-2 space-y-6'>
-              <Card className='h-full border-2 border-zinc-200 dark:border-zinc-800'>
+              <Card className='border-2 border-zinc-200 dark:border-zinc-800'>
                 <CardHeader className='flex flex-row items-center justify-between'>
                   <CardTitle>Jelentkezők sora</CardTitle>
                   {voteSession?.isActive && !isGuest && !isAdvisor && (
