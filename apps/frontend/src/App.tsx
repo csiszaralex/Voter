@@ -30,9 +30,12 @@ function App() {
 
   useEffect(() => {
     if (lastVoteResult) {
-      setIsVoteResultVisible(true);
-      const timer = setTimeout(() => setIsVoteResultVisible(false), 10000);
-      return () => clearTimeout(timer);
+      const showTimer = setTimeout(() => setIsVoteResultVisible(true), 0);
+      const hideTimer = setTimeout(() => setIsVoteResultVisible(false), 10000);
+      return () => {
+        clearTimeout(showTimer);
+        clearTimeout(hideTimer);
+      };
     }
   }, [lastVoteResult]);
 
@@ -325,7 +328,7 @@ function App() {
                                 <>
                                   {grouped['IGEN']?.length > 0 && (
                                     <div className='flex items-start gap-2'>
-                                      <b className='text-green-600 dark:text-green-400 min-w-[60px]'>
+                                      <b className='text-green-600 dark:text-green-400 min-w-15'>
                                         IGEN:
                                       </b>
                                       <span className='text-muted-foreground'>
@@ -335,7 +338,7 @@ function App() {
                                   )}
                                   {grouped['NEM']?.length > 0 && (
                                     <div className='flex items-start gap-2'>
-                                      <b className='text-red-600 dark:text-red-400 min-w-[60px]'>
+                                      <b className='text-red-600 dark:text-red-400 min-w-15'>
                                         NEM:
                                       </b>
                                       <span className='text-muted-foreground'>
@@ -345,7 +348,7 @@ function App() {
                                   )}
                                   {grouped['TARTOZKODOM']?.length > 0 && (
                                     <div className='flex items-start gap-2'>
-                                      <b className='text-zinc-600 dark:text-zinc-400 min-w-[60px]'>
+                                      <b className='text-zinc-600 dark:text-zinc-400 min-w-15'>
                                         TART.:
                                       </b>
                                       <span className='text-muted-foreground'>

@@ -12,6 +12,14 @@ export class EarlyDataGuard implements CanActivate {
       return true;
     }
 
+    const isWebSocket =
+      request.headers['upgrade'] &&
+      request.headers['upgrade'].toString().toLowerCase() === 'websocket';
+
+    if (isWebSocket) {
+      return true;
+    }
+
     const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
 
     if (!safeMethods.includes(request.method)) {
