@@ -77,6 +77,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('toggle_reaction')
   handleReaction(@ConnectedSocket() client: Socket) {
+    // Csak USER szavazhat/reagálhat
+    const user = this.appService.getUser(client.id);
+    if (!user || user.role !== 'USER') {
+      this.logger.warn(`User ${user?.username} (${user?.role}) tried to toggle reaction`);
+      client.emit('error', { message: 'Only regular users can toggle reactions.' });
+      return;
+    }
+
     this.logger.log(`Toggling reaction for clientId=${client.id}`);
     this.appService.toggleReaction(client.id);
     this.broadcastState();
@@ -91,6 +99,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('cast_vote')
   handleCastVote(@ConnectedSocket() client: Socket, @MessageBody() data: CastVoteDto) {
+    const user = this.appService.getUser(client.id);
+    if (!user || user.role !== 'USER') {
+      this.logger.warn(`User ${user?.username} (${user?.role}) tried to cast vote`);
+      client.emit('error', { message: 'Nincs jogosultságod szavazni!' });
+      return;
+    }
+
     this.logger.log(`Casting vote for clientId=${client.id}`);
     this.appService.castVote(client.id, data.vote);
     client.emit('vote_accepted');
@@ -129,6 +144,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('start_vote')
   handleStartVote(@ConnectedSocket() client: Socket, @MessageBody() data: StartVoteDto) {
     try {
+      const user = this.appService.getUser(client.id);
+      if (!user || user.role !== 'ADMIN') {
+        throw new Error('Csak admin indíthat szavazást!');
+      }
+
       this.logger.log(`Starting vote (isAnonymous=${data.isAnonymous}) by clientId=${client.id}`);
       this.appService.startVote(data.isAnonymous);
       this.server.emit('vote_started', { isAnonymous: data.isAnonymous });
@@ -145,7 +165,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('stop_vote')
-  handleStopVote() {
+  handleStopVote(@ConnectedSocket() client: Socket) {
+    const user = this.appService.getUser(client.id);
+    if (!user || user.role !== 'ADMIN') {
+      this.logger.warn(`User ${user?.username} (${user?.role}) tried to stop vote`);
+      return;
+    }
+
     this.logger.log('Stopping vote manually and broadcasting results');
     // Kényszerített lezárás és eredmény hirdetés
     const results = this.appService.getVoteResults();

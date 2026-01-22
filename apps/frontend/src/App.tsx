@@ -54,17 +54,18 @@ function App() {
 
   const isAdmin = currentUser?.role === 'ADMIN';
   const isGuest = currentUser?.role === 'GUEST';
+  const isAdvisor = currentUser?.role === 'ADVISOR';
   const isUser = currentUser?.role === 'USER';
 
   return (
-    <div className='min-h-dvh bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8 font-sans'>
+    <div className='min-h-dvh bg-zinc-50 dark:bg-zinc-950 font-sans'>
       <ErrorDialog message={error} onClose={clearError} />
 
       {!isConnected || !currentUser ? (
         <LoginForm onJoin={join} />
       ) : (
         <>
-          <div className='max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6'>
+          <div className='max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 p-2 md:p-6'>
             {/* LEFT COLUMN: Controls */}
             <div className='md:col-span-1 space-y-6'>
               <Card>
@@ -75,6 +76,9 @@ function App() {
                     {isGuest && (
                       <span className='ml-2 text-zinc-500 text-xs uppercase'>Vendég</span>
                     )}
+                    {isAdvisor && (
+                      <span className='ml-2 text-blue-500 text-xs uppercase'>Felügyelő</span>
+                    )}
                   </CardTitle>
 
                   {/* KILÉPÉS GOMB */}
@@ -83,8 +87,8 @@ function App() {
                   </Button>
                 </CardHeader>
                 <CardContent className='space-y-4'>
-                  {/* User & Guest Actions - Raise Hand allowed for both */}
-                  {(isUser || isGuest) && (
+                  {/* User & Guest & Advisor Actions - Raise Hand allowed for all */}
+                  {(isUser || isGuest || isAdvisor) && (
                     <div className='grid grid-cols-1 gap-3'>
                       <Button
                         variant={currentUser.hands.topicAt ? 'destructive' : 'default'}
@@ -241,6 +245,7 @@ function App() {
                                   {u.username}
                                   {u.role === 'ADMIN' && ' (Admin)'}
                                   {u.role === 'GUEST' && ' (Vendég)'}
+                                  {u.role === 'ADVISOR' && ' (Felügyelő)'}
                                 </Badge>
                               ))}
                             </div>
@@ -255,10 +260,10 @@ function App() {
 
             {/* RIGHT COLUMN: Queue & Results */}
             <div className='md:col-span-2 space-y-6'>
-              <Card className='h-full border-2 border-zinc-200 dark:border-zinc-800'>
+              <Card className='border-2 border-zinc-200 dark:border-zinc-800'>
                 <CardHeader className='flex flex-row items-center justify-between'>
                   <CardTitle>Jelentkezők sora</CardTitle>
-                  {voteSession?.isActive && (
+                  {voteSession?.isActive && !isGuest && (
                     <Badge variant='destructive' className='animate-pulse'>
                       SZAVAZÁS...
                     </Badge>
@@ -276,7 +281,7 @@ function App() {
               </Card>
 
               {/* Vote Results (Ha van) */}
-              {lastVoteResult && !voteSession?.isActive && (
+              {lastVoteResult && !voteSession?.isActive && !isGuest && (
                 <>
                   {isVoteResultVisible ? (
                     <Card className='border-green-200 dark:border-green-900 relative'>

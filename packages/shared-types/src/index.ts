@@ -1,5 +1,5 @@
 // User szerepkörök
-export type UserRole = 'USER' | 'ADMIN' | 'GUEST';
+export type UserRole = 'USER' | 'ADMIN' | 'GUEST' | 'ADVISOR';
 
 export type VoteOption = 'IGEN' | 'NEM' | 'TARTOZKODOM';
 export type HandType = 'TOPIC' | 'REPLY';
