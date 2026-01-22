@@ -263,7 +263,7 @@ function App() {
               <Card className='border-2 border-zinc-200 dark:border-zinc-800'>
                 <CardHeader className='flex flex-row items-center justify-between'>
                   <CardTitle>Jelentkezők sora</CardTitle>
-                  {voteSession?.isActive && !isGuest && !isAdvisor && (
+                  {voteSession?.isActive && !isGuest && (
                     <Badge variant='destructive' className='animate-pulse'>
                       SZAVAZÁS...
                     </Badge>

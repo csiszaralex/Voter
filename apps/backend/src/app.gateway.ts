@@ -79,8 +79,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleReaction(@ConnectedSocket() client: Socket) {
     // Csak USER szavazhat/reagálhat
     const user = this.appService.getUser(client.id);
-    if (!user || user.role === 'GUEST' || user.role === 'ADVISOR') {
+    if (!user || user.role !== 'USER') {
       this.logger.warn(`User ${user?.username} (${user?.role}) tried to toggle reaction`);
+      client.emit('error', { message: 'Only regular users can toggle reactions.' });
       return;
     }
 
@@ -99,7 +100,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('cast_vote')
   handleCastVote(@ConnectedSocket() client: Socket, @MessageBody() data: CastVoteDto) {
     const user = this.appService.getUser(client.id);
-    if (!user || user.role === 'GUEST' || user.role === 'ADVISOR') {
+    if (!user || user.role !== 'USER') {
       this.logger.warn(`User ${user?.username} (${user?.role}) tried to cast vote`);
       client.emit('error', { message: 'Nincs jogosultságod szavazni!' });
       return;
