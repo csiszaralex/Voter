@@ -51,7 +51,7 @@ export function QueueList({ users, isAdmin, onLowerHand }: QueueListProps) {
     return a.timestamp - b.timestamp;
   });
 
-  const containerClass = 'h-50 w-full';
+  const containerClass = 'w-full';
   if (sortedQueue.length === 0) {
     return (
       <div className={`${containerClass} flex items-center justify-center text-zinc-500`}>

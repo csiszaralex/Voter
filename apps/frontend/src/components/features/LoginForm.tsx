@@ -16,6 +16,7 @@ const roles: { value: UserRole; label: string }[] = [
   { value: 'USER', label: 'Résztvevő' },
   { value: 'ADMIN', label: 'Adminisztrátor' },
   { value: 'GUEST', label: 'Vendég' },
+  { value: 'ADVISOR', label: 'Felügyelő' },
 ];
 
 export function LoginForm({ onJoin }: { onJoin: (name: string, role: UserRole) => void }) {
