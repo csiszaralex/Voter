@@ -34,33 +34,48 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     try {
-      const username = client.handshake.query.username as string;
-      const role = (client.handshake.query.role as UserRole) ?? 'USER';
-
-      if (!username) {
-        this.logger.warn(`Connection attempt without username (clientId=${client.id})`);
-        client.disconnect();
-        return;
-      }
+      const { username, role } = this.parseConnectionQuery(client);
 
       const authClient = client as AuthenticatedSocket;
       const user = this.appService.joinUser(client.id, username, role);
       authClient.data.user = user;
+
       this.logger.log(`User connected: ${user.username} (clientId=${client.id})`);
-
-      // Csak az új usernek visszajelzés, hogy sikerült (opcionális)
       client.emit('welcome', { user });
-
       this.broadcastState();
     } catch (error) {
-      this.logger.error(
-        `Error during handleConnection for clientId=${client.id}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      client.emit('error', { message: error.message });
-      setTimeout(() => client.disconnect(), 1000);
+      this.handleConnectionError(client, error);
     }
+  }
+
+  private parseConnectionQuery(client: Socket): { username: string; role: UserRole } {
+    const { query } = client.handshake;
+
+    const rawUsername = Array.isArray(query.username) ? query.username[0] : query.username;
+    const rawRole = Array.isArray(query.role) ? query.role[0] : query.role;
+
+    if (!rawUsername) {
+      throw new Error('Connection rejected: Username is required.');
+    }
+
+    const role: UserRole = (rawRole as UserRole) ?? 'USER';
+
+    return { username: rawUsername, role };
+  }
+
+  private handleConnectionError(client: Socket, error: unknown) {
+    // Error safe casting
+    const message = error instanceof Error ? error.message : 'Unknown connection error';
+
+    this.logger.warn(`Connection failed (clientId=${client.id}): ${message}`);
+
+    client.emit('error', {
+      type: 'ConnectionError',
+      message,
+    });
+
+    // Graceful disconnect: hagyunk időt a kliensnek megkapni az error eventet
+    setTimeout(() => client.disconnect(true), 1000);
   }
 
   handleDisconnect(client: Socket) {
