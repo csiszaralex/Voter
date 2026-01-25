@@ -32,6 +32,9 @@ RUN pnpm install --only=production --frozen-lockfile --config.node-linker=hoiste
 FROM node:22-alpine AS runner
 WORKDIR /app
 
+ARG APP_VERSION
+ENV APP_VERSION=$APP_VERSION
+
 # Senior tipp: dumb-init használata a Node process signal handling (SIGTERM) miatt
 RUN apk add --no-cache libc6-compat dumb-init
 

@@ -31,6 +31,9 @@ RUN pnpm turbo build --filter=frontend...
 # --- 3. NGINX STAGE ---
 FROM nginx:alpine
 
+ARG VITE_APP_VERSION
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
+
 # Biztonsági alapbeállítás (opcionális, de ajánlott)
 # Töröljük az alapértelmezett Nginx configot
 RUN rm -rf /etc/nginx/conf.d/*

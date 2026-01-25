@@ -1,8 +1,10 @@
-name: CI/CD Pipeline
+name: Release & Deploy
 
 on:
   push:
-    branches: ['main']
+    tags:
+      - 'backend@*'
+      - 'frontend@*'
 
 env:
   REGISTRY: ghcr.io
@@ -14,15 +16,30 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      service: ${{ steps.meta.outputs.service }}
+      version: ${{ steps.meta.outputs.version }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- Mivel a neve Voter es nem voter
-      - name: Lowercase Repo Name
+      - name: Extract Metadata from Tag
+        id: meta
         run: |
-          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+          TAG=${{ github.ref_name }}
+          SERVICE=${TAG%@*}
+          VERSION=${TAG#*@}
+
+          echo "Detected Service: $SERVICE"
+          echo "Detected Version: $VERSION"
+
+          # Outputba rakjuk, hogy későbbi lépések/jobok lássák
+          echo "service=$SERVICE" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          # Repo név kisbetűsítése
+          echo "IMAGE_NAME=${REPO_NAME,,}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -35,28 +52,39 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Backend
+        if: steps.meta.outputs.service == 'backend'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: apps/backend/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:buildcache,mode=max
 
       - name: Build and push Frontend
+        if: steps.meta.outputs.service == 'frontend'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: apps/frontend/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+          build-args: |
+            VITE_APP_VERSION=${{ steps.meta.outputs.version }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:buildcache,mode=max
 
   deploy:
     needs: build-and-push
     runs-on: self-hosted
+    # environment: production
 
     steps:
       - name: Checkout repository
@@ -71,11 +99,15 @@ jobs:
 
       - name: Deploy to VPS
         run: |
-          # 1. Frissítjük a képeket
-          docker compose pull
+          echo "Deploying ${{ needs.build-and-push.outputs.service }} version ${{ needs.build-and-push.outputs.version }}..."
 
-          # 2. Újraindítjuk a konténereket (a compose fájl már image-re mutat)
-          docker compose up -d --remove-orphans
+          # Csak a frissült képet húzzuk le (hatékonyabb)
+          # A docker compose pull alapból a 'latest' taget keresi a yaml alapján,
+          # amit az előző jobban frissítettünk.
+          docker compose pull ${{ needs.build-and-push.outputs.service }}
 
-          # 3. Töröljük a régi (dangling) image-eket helytakarékosság miatt
+          # Újraindítjuk a konténereket
+          docker compose up -d --remove-orphans ${{ needs.build-and-push.outputs.service }}
+
+          # Takarítás
           docker image prune -f
