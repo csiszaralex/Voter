@@ -100,6 +100,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('raise_hand')
+  @Roles(['USER', 'ADVISOR', 'GUEST'], 'Csak normál felhasználók jelentkezhetnek!')
   handleRaiseHand(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: RaiseHandDto,
