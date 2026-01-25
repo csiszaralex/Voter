@@ -8,6 +8,8 @@ import {
 } from '@/components/ui/dialog'; // Shadcn komponens
 import type { VoteOption, VoteSession } from '@repo/shared-types';
 
+import { useEffect } from 'react';
+
 interface VotingModalProps {
   session: VoteSession | null;
   hasVoted: boolean; // Ezt a parentben kell kiszámolni: votes.has(mySocketId)
@@ -16,6 +18,20 @@ interface VotingModalProps {
 
 export function VotingModal({ session, hasVoted, onVote }: VotingModalProps) {
   const isOpen = session?.isActive && !hasVoted;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (key === 'i') onVote('IGEN');
+      if (key === 'n') onVote('NEM');
+      if (key === 't') onVote('TARTOZKODOM');
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onVote]);
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
