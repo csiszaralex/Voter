@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import type { UserRole } from '@repo/shared-types';
 import { useState } from 'react';
+import { VersionBadge } from '../versionBadge';
 
 const roles: { value: UserRole; label: string }[] = [
   { value: 'USER', label: 'Résztvevő' },
@@ -70,6 +71,7 @@ export function LoginForm({ onJoin }: { onJoin: (name: string, role: UserRole) =
             </Button>
           </form>
         </CardContent>
+        <VersionBadge />
       </Card>
     </div>
   );
