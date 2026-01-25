@@ -1,5 +1,11 @@
 # backend
 
+## 1.1.0
+
+### Minor Changes
+
+- ec21ce4: Enable cors in backend
+
 ## 1.0.0
 
 ### Major Changes
