@@ -17,6 +17,8 @@ import type {
 import { UserRole } from '@repo/shared-types';
 import { Server, Socket } from 'socket.io';
 import { AppService } from './app.service';
+import { Roles } from './roles.decorator';
+import type { AuthenticatedSocket } from './socket-types';
 
 @WebSocketGateway({
   cors: {
@@ -43,7 +45,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
+      const authClient = client as AuthenticatedSocket;
       const user = this.appService.joinUser(client.id, username, role);
+      authClient.data.user = user;
       this.logger.log(`User connected: ${user.username} (clientId=${client.id})`);
 
       // Csak az új usernek visszajelzés, hogy sikerült (opcionális)
@@ -76,36 +80,25 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // --- User Handlers ---
 
   @SubscribeMessage('toggle_reaction')
-  handleReaction(@ConnectedSocket() client: Socket) {
-    // Csak USER szavazhat/reagálhat
-    const user = this.appService.getUser(client.id);
-    if (!user || user.role !== 'USER') {
-      this.logger.warn(`User ${user?.username} (${user?.role}) tried to toggle reaction`);
-      client.emit('error', { message: 'Only regular users can toggle reactions.' });
-      return;
-    }
-
-    this.logger.log(`Toggling reaction for clientId=${client.id}`);
+  @Roles(['USER'], 'Csak normál felhasználók reagálhatnak!')
+  handleReaction(@ConnectedSocket() client: AuthenticatedSocket) {
     this.appService.toggleReaction(client.id);
     this.broadcastState();
   }
 
   @SubscribeMessage('raise_hand')
-  handleRaiseHand(@ConnectedSocket() client: Socket, @MessageBody() data: RaiseHandDto) {
+  handleRaiseHand(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: RaiseHandDto,
+  ) {
     this.logger.log(`Toggling hand (${data.type}) for clientId=${client.id}`);
     this.appService.toggleHand(client.id, data.type);
     this.broadcastState();
   }
 
   @SubscribeMessage('cast_vote')
-  handleCastVote(@ConnectedSocket() client: Socket, @MessageBody() data: CastVoteDto) {
-    const user = this.appService.getUser(client.id);
-    if (!user || user.role !== 'USER') {
-      this.logger.warn(`User ${user?.username} (${user?.role}) tried to cast vote`);
-      client.emit('error', { message: 'Nincs jogosultságod szavazni!' });
-      return;
-    }
-
+  @Roles(['USER'], 'Nincs jogosultságod szavazni!')
+  handleCastVote(@ConnectedSocket() client: AuthenticatedSocket, @MessageBody() data: CastVoteDto) {
     this.logger.log(`Casting vote for clientId=${client.id}`);
     this.appService.castVote(client.id, data.vote);
     client.emit('vote_accepted');
@@ -125,9 +118,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // --- Admin Handlers ---
-  // (Ideális esetben Guard-dal védeni, de MVP-ben a kliens oldali elrejtés elég)
 
   @SubscribeMessage('admin_clear_reactions')
+  @Roles(['ADMIN'], 'Csak adminok törölhetik a reakciókat!')
   handleClearReactions(@MessageBody() data: { targetUsername?: string }) {
     this.logger.log(`Admin clearing reactions for ${data.targetUsername ?? 'all users'}`);
     this.appService.clearReactions(data.targetUsername);
@@ -135,6 +128,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('admin_lower_hand')
+  @Roles(['ADMIN'], 'Csak adminok engedélyezhetik a kezek leengedését!')
   handleAdminLowerHand(@MessageBody() data: AdminLowerHandDto) {
     this.logger.log(`Admin lowering hand (${data.type}) for targetId=${data.targetId}`);
     this.appService.toggleHand(data.targetId, data.type, true);
@@ -142,36 +136,20 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('start_vote')
-  handleStartVote(@ConnectedSocket() client: Socket, @MessageBody() data: StartVoteDto) {
-    try {
-      const user = this.appService.getUser(client.id);
-      if (!user || user.role !== 'ADMIN') {
-        throw new Error('Csak admin indíthat szavazást!');
-      }
-
-      this.logger.log(`Starting vote (isAnonymous=${data.isAnonymous}) by clientId=${client.id}`);
-      this.appService.startVote(data.isAnonymous);
-      this.server.emit('vote_started', { isAnonymous: data.isAnonymous });
-      this.broadcastState();
-    } catch (e) {
-      this.logger.error(
-        `Error while starting vote by clientId=${client.id}`,
-        e instanceof Error ? e.stack : undefined,
-      );
-      // Itt küldjük vissza a hibát specifikusan annak, aki indította
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      client.emit('error', { message: e.message });
-    }
+  @Roles(['ADMIN'], 'Csak admin indíthat szavazást!')
+  handleStartVote(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: StartVoteDto,
+  ) {
+    this.logger.log(`Starting vote (isAnonymous=${data.isAnonymous}) by clientId=${client.id}`);
+    this.appService.startVote(data.isAnonymous);
+    this.server.emit('vote_started', { isAnonymous: data.isAnonymous });
+    this.broadcastState();
   }
 
   @SubscribeMessage('stop_vote')
-  handleStopVote(@ConnectedSocket() client: Socket) {
-    const user = this.appService.getUser(client.id);
-    if (!user || user.role !== 'ADMIN') {
-      this.logger.warn(`User ${user?.username} (${user?.role}) tried to stop vote`);
-      return;
-    }
-
+  @Roles(['ADMIN'], 'Csak admin állíthatja le a szavazást!')
+  handleStopVote() {
     this.logger.log('Stopping vote manually and broadcasting results');
     // Kényszerített lezárás és eredmény hirdetés
     const results = this.appService.getVoteResults();
