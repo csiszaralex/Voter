@@ -47,15 +47,60 @@ function App() {
     }
   }, [currentUser]);
 
-  const handleVote = (vote: VoteOption) => {
-    socket.emit('cast_vote', { vote });
-    // Itt egy lokális state-tel elrejthetjük a modalt, amíg a backend nem zárja le
-  };
-
   const isAdmin = currentUser?.role === 'ADMIN';
   const isGuest = currentUser?.role === 'GUEST';
   const isAdvisor = currentUser?.role === 'ADVISOR';
   const isUser = currentUser?.role === 'USER';
+
+  const handleVote = (vote: VoteOption) => {
+    socket.emit('cast_vote', { vote });
+  };
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable) return;
+
+      const key = e.key.toLowerCase();
+
+      // General Actions (User, Guest, Advisor)
+      if (!isAdmin && !e.ctrlKey) {
+        if (key === ' ') socket.emit('raise_hand', { type: 'TOPIC' });
+        if (key === 'r') socket.emit('raise_hand', { type: 'REPLY' });
+      }
+
+      // User Only Actions
+      if (isUser && key === 'l') socket.emit('toggle_reaction');
+
+      // Admin Only Actions (Ctrl + Key)
+      if (isAdmin && e.ctrlKey) {
+        switch (key) {
+          case ' ':
+            socket.emit('start_vote', { isAnonymous: false });
+            break;
+          case 'a':
+            socket.emit('start_vote', { isAnonymous: true });
+            break;
+          case 's':
+            socket.emit('stop_vote');
+            break;
+          case 'c':
+            socket.emit('admin_clear_reactions', {});
+            break;
+          default:
+            return;
+        }
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentUser, socket, isAdmin, isUser]);
 
   return (
     <div className='min-h-dvh bg-zinc-50 dark:bg-zinc-950 font-sans'>

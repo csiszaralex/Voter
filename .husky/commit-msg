@@ -1,0 +1,8 @@
+# 1. Betöltjük az fnm környezetet (ha elérhető), bash szintaxissal
+if command -v fnm &> /dev/null; then
+  eval "$(fnm env --shell bash)"
+fi
+
+# 2. Most már van Node, futhat a commitlint
+# pnpm helyett npx-et használunk, mert az biztosan ott van a node mellett
+npx --no -- commitlint --edit "${1}"

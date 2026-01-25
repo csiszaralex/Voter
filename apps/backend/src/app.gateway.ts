@@ -17,9 +17,9 @@ import type {
 import { UserRole } from '@repo/shared-types';
 import { Server, Socket } from 'socket.io';
 import { AppService } from './app.service';
-import { Roles } from './roles.decorator';
-import type { AuthenticatedSocket } from './socket-types';
-import { WebsocketExceptionFilter } from './ws-exception.filter';
+import { Roles } from './common/roles.decorator';
+import type { AuthenticatedSocket } from './common/socket-types';
+import { WebsocketExceptionFilter } from './common/ws-exception.filter';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 @UseFilters(new WebsocketExceptionFilter())
@@ -100,6 +100,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('raise_hand')
+  @Roles(['USER', 'ADVISOR', 'GUEST'], 'Csak normál felhasználók jelentkezhetnek!')
   handleRaiseHand(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: RaiseHandDto,
