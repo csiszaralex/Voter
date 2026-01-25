@@ -35,8 +35,8 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          # Ez fut le, amikor a "Version Packages" PR-t mergelik.
-          # Mivel nem npm-re publikálunk, csak a verziókat és a tageket pusholjuk vissza.
+          commit: 'chore(repo): version packages'
+          title: 'chore(repo): version packages'
           publish: pnpm changeset tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
