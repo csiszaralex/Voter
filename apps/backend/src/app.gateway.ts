@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, UseFilters } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -19,12 +19,10 @@ import { Server, Socket } from 'socket.io';
 import { AppService } from './app.service';
 import { Roles } from './roles.decorator';
 import type { AuthenticatedSocket } from './socket-types';
+import { WebsocketExceptionFilter } from './ws-exception.filter';
 
-@WebSocketGateway({
-  cors: {
-    origin: '*',
-  },
-})
+@WebSocketGateway({ cors: { origin: '*' } })
+@UseFilters(new WebsocketExceptionFilter())
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
