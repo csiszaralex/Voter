@@ -1,5 +1,11 @@
 # backend
 
+## 1.1.5
+
+### Patch Changes
+
+- 9fc82f9: fix deploy
+
 ## 1.1.4
 
 ### Patch Changes
