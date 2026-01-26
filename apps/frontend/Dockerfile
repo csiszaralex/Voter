@@ -14,7 +14,7 @@ RUN corepack enable
 # Dependencies telepítése
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Build
 COPY --from=pruner /app/out/full/ .
