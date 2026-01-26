@@ -22,6 +22,8 @@ COPY --from=pruner /app/out/full/ .
 # BUILD ARGUMENTUMOK KEZELÉSE
 # Fontos: SPA (Vite/React) esetén a build időben cserélődnek ki a változók!
 # A "Build Once, Deploy Anywhere" elv miatt a relatív URL (proxy) a legjobb megoldás.
+ARG VITE_APP_VERSION
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
 ENV VITE_SOCKET_URL=/
 
 # A turbo build automatikusan felismeri a topológiát (hogy a shared-types kell a frontendnek)
@@ -31,8 +33,6 @@ RUN pnpm turbo build --filter=frontend...
 # --- 3. NGINX STAGE ---
 FROM nginx:alpine
 
-ARG VITE_APP_VERSION
-ENV VITE_APP_VERSION=$VITE_APP_VERSION
 
 # Biztonsági alapbeállítás (opcionális, de ajánlott)
 # Töröljük az alapértelmezett Nginx configot
