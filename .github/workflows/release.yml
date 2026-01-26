@@ -39,4 +39,4 @@ jobs:
           title: 'chore(repo): version packages'
           publish: pnpm changeset tag
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CHANGESET_ACTION_PAT }}
