@@ -1,5 +1,11 @@
 # frontend
 
+## 1.0.6
+
+### Patch Changes
+
+- 95e8770: Add ignore-scripts in Dockerfiles to not prepare husky in production builds
+
 ## 1.0.5
 
 ### Patch Changes
