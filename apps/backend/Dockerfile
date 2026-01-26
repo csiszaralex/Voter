@@ -26,7 +26,7 @@ RUN corepack enable
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 # Itt CSAK a production dependency-ket telepítjük
-RUN pnpm install --only=production --frozen-lockfile --config.node-linker=hoisted
+RUN pnpm install --only=production --ignore-scripts --frozen-lockfile --config.node-linker=hoisted
 
 # --- 4. RUNNER STAGE ---
 FROM node:22-alpine AS runner
