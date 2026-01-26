@@ -1,5 +1,11 @@
 # frontend
 
+## 1.0.7
+
+### Patch Changes
+
+- d395318: Fix deploy phase in nginx and turbo env fixing
+
 ## 1.0.6
 
 ### Patch Changes
