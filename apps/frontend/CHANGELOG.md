@@ -1,5 +1,11 @@
 # frontend
 
+## 1.0.4
+
+### Patch Changes
+
+- 524b54a: Try to fix action error
+
 ## 1.0.3
 
 ### Patch Changes
