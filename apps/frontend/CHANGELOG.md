@@ -1,5 +1,11 @@
 # frontend
 
+## 1.0.5
+
+### Patch Changes
+
+- 9fc82f9: fix deploy
+
 ## 1.0.4
 
 ### Patch Changes
