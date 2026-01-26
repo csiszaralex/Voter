@@ -1,5 +1,11 @@
 # frontend
 
+## 1.0.8
+
+### Patch Changes
+
+- 0cee9e2: Fix url handle in frontend to call backend
+
 ## 1.0.7
 
 ### Patch Changes
