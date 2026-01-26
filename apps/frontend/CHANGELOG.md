@@ -1,5 +1,11 @@
 # frontend
 
+## 1.0.3
+
+### Patch Changes
+
+- 9912bae: Another try to fix actions
+
 ## 1.0.2
 
 ### Patch Changes
