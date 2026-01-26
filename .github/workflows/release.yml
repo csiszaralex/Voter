@@ -18,6 +18,9 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CHANGESET_ACTION_PAT }}
 
       - name: Install Dependencies
         uses: pnpm/action-setup@v2
@@ -37,6 +40,6 @@ jobs:
         with:
           commit: 'chore(repo): version packages'
           title: 'chore(repo): version packages'
-          publish: pnpm changeset tag
+          publish: pnpm ci:publish
         env:
           GITHUB_TOKEN: ${{ secrets.CHANGESET_ACTION_PAT }}
