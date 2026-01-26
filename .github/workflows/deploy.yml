@@ -39,7 +39,8 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
           # Repo név kisbetűsítése
-          echo "IMAGE_NAME=${REPO_NAME,,}" >> $GITHUB_ENV
+          REPO="${{ github.repository }}"
+          echo "IMAGE_NAME=${REPO,,}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
