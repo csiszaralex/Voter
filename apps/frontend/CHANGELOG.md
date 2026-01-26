@@ -1,5 +1,11 @@
 # frontend
 
+## 1.0.2
+
+### Patch Changes
+
+- 4cfe996: Try to fix actions
+
 ## 1.0.1
 
 ### Patch Changes

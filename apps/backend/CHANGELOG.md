@@ -1,5 +1,11 @@
 # backend
 
+## 1.1.2
+
+### Patch Changes
+
+- 4cfe996: Try to fix actions
+
 ## 1.1.1
 
 ### Patch Changes
