@@ -1,5 +1,11 @@
 # frontend
 
+## 1.0.1
+
+### Patch Changes
+
+- 13ce570: Test action runner
+
 ## 1.0.0
 
 ### Major Changes
