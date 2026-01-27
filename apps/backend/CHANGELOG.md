@@ -1,5 +1,16 @@
 # backend
 
+## 1.2.0
+
+### Minor Changes
+
+- 5b3cb9c: Add reconnection logic in all package and indicator for it
+
+### Patch Changes
+
+- Updated dependencies [5b3cb9c]
+  - @repo/shared-types@1.0.0
+
 ## 1.1.6
 
 ### Patch Changes
