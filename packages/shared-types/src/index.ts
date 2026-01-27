@@ -11,11 +11,12 @@ export interface HandState {
 }
 
 export interface User {
-  id: string; // socket.id
+  id: string; // Stable User ID (not socket.id)
   username: string;
   role: UserRole;
   reaction: 'LIKE' | null;
   hands: HandState;
+  isConnected: boolean;
 }
 
 // Szavazás állapota (publikus info)
