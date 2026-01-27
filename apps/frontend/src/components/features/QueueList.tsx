@@ -65,12 +65,12 @@ export function QueueList({ users, isAdmin, onLowerHand }: QueueListProps) {
       <div className='space-y-3'>
         {sortedQueue.map((item, index) => (
           <div
-            key={`${item.id}-${item.type}`} // Egyedi kulcs kell!
+            key={`${item.id}-${item.type}`}
             className={`flex items-center justify-between p-3 rounded shadow-sm border ${
               item.type === 'REPLY'
                 ? 'bg-red-50 border-red-100 dark:bg-red-950/30 dark:border-red-900'
-                : 'bg-white border-zinc-100 dark:bg-zinc-800 dark:border-zinc-700'
-            }`}
+                : 'bg-blue-50 border-blue-100 dark:bg-blue-950/30 dark:border-blue-900'
+            } ${isAdmin ? 'animate-flash' : ''}`}
           >
             <div className='flex items-center gap-3'>
               <span className='font-mono text-zinc-400 text-sm'>#{index + 1}</span>

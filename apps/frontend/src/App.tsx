@@ -56,54 +56,8 @@ function App() {
     socket.emit('cast_vote', { vote });
   };
 
-  // Global Keyboard Shortcuts
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input or textarea
-      const target = e.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable) return;
-
-      const key = e.key.toLowerCase();
-
-      // General Actions (User, Guest, Advisor)
-      if (!isAdmin && !e.ctrlKey) {
-        if (key === ' ') socket.emit('raise_hand', { type: 'TOPIC' });
-        if (key === 'r') socket.emit('raise_hand', { type: 'REPLY' });
-      }
-
-      // User Only Actions
-      if (isUser && key === 'l') socket.emit('toggle_reaction');
-
-      // Admin Only Actions (Ctrl + Key)
-      if (isAdmin && e.ctrlKey) {
-        switch (key) {
-          case ' ':
-            socket.emit('start_vote', { isAnonymous: false });
-            break;
-          case 'a':
-            socket.emit('start_vote', { isAnonymous: true });
-            break;
-          case 's':
-            socket.emit('stop_vote');
-            break;
-          case 'c':
-            socket.emit('admin_clear_reactions', {});
-            break;
-          default:
-            return;
-        }
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentUser, socket, isAdmin, isUser]);
-
   return (
-    <div className='min-h-dvh bg-zinc-50 dark:bg-zinc-950 font-sans'>
+    <div className='min-h-dvh bg-linear-to-br from-zinc-50 to-blue-50 dark:from-zinc-950 dark:to-zinc-900 font-sans'>
       <ErrorDialog message={error} onClose={clearError} />
 
       {!isConnected || !currentUser ? (
@@ -127,7 +81,7 @@ function App() {
                   </CardTitle>
 
                   {/* KILÉPÉS GOMB */}
-                  <Button variant='ghost' size='icon' onClick={logout} title='Kilépés'>
+                  <Button variant='ghost' size='icon' onClick={logout} title='Kilépés' shortcutKey='escape'>
                     <LogOut className='h-5 w-5 text-zinc-500 hover:text-red-600' />
                   </Button>
                 </CardHeader>
@@ -136,18 +90,20 @@ function App() {
                   {(isUser || isGuest || isAdvisor) && (
                     <div className='grid grid-cols-1 gap-3'>
                       <Button
-                        variant={currentUser.hands.topicAt ? 'destructive' : 'default'}
-                        className='h-12 text-lg'
+                        variant={currentUser.hands.topicAt ? 'destructive' : 'outline'}
+                        className={`h-12 text-lg ${currentUser.hands.topicAt ? '' : 'border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/20'}`}
                         onClick={() => socket.emit('raise_hand', { type: 'TOPIC' })}
+                        shortcutKey=' '
                       >
                         <Hand className='mr-2 h-5 w-5' />
                         {currentUser.hands.topicAt ? 'Visszavonás' : 'Szólnék (Téma)'}
                       </Button>
 
                       <Button
-                        variant={currentUser.hands.replyAt ? 'destructive' : 'secondary'}
-                        className='h-12'
+                        variant={currentUser.hands.replyAt ? 'destructive' : 'outline'}
+                        className={`h-12 ${currentUser.hands.replyAt ? '' : 'border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20'}`}
                         onClick={() => socket.emit('raise_hand', { type: 'REPLY' })}
+                        shortcutKey='r'
                       >
                         <Hand className='mr-2 h-5 w-5' />
                         {currentUser.hands.replyAt ? 'Visszavonás' : 'Reagálnék (Válasz)'}
@@ -157,7 +113,9 @@ function App() {
                       {isUser && (
                         <Button
                           variant={currentUser.reaction === 'LIKE' ? 'default' : 'outline'}
+                          className={currentUser.reaction === 'LIKE' ? 'bg-green-500 hover:bg-green-600' : ''}
                           onClick={() => socket.emit('toggle_reaction')}
+                          shortcutKey='l'
                         >
                           <ThumbsUp
                             className={`mr-2 h-4 w-4 ${currentUser.reaction === 'LIKE' ? 'fill-current' : ''}`}
@@ -177,6 +135,8 @@ function App() {
                           variant='outline'
                           className='w-full'
                           onClick={() => socket.emit('admin_clear_reactions', {})}
+                          shortcutKey='c'
+                          ctrlNeeded
                         >
                           Reakciók törlése
                         </Button>
@@ -188,12 +148,16 @@ function App() {
                             <Button
                               size='sm'
                               onClick={() => socket.emit('start_vote', { isAnonymous: false })}
+                              shortcutKey=' '
+                              ctrlNeeded
                             >
                               Nyílt
                             </Button>
                             <Button
                               size='sm'
                               onClick={() => socket.emit('start_vote', { isAnonymous: true })}
+                              shortcutKey='a'
+                              ctrlNeeded
                             >
                               Anonim
                             </Button>
@@ -206,6 +170,8 @@ function App() {
                             variant='destructive'
                             className='w-full mt-2 animate-pulse'
                             onClick={() => socket.emit('stop_vote')}
+                            shortcutKey='s'
+                            ctrlNeeded
                           >
                             SZAVAZÁS LEZÁRÁSA
                           </Button>
@@ -246,10 +212,10 @@ function App() {
                         )}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className='space-y-4'>
+                    <CardContent className='space-y-2'>
                       {/* Voters List */}
                       <div>
-                        <h4 className='text-sm font-semibold mb-2 text-primary'>
+                        <h4 className='text-sm font-semibold text-primary'>
                           Szavazók ({voters.length})
                         </h4>
                         {voters.length === 0 ? (
@@ -278,9 +244,9 @@ function App() {
 
                       {/* Others (Admin/Guest) */}
                       {others.length > 0 && (
-                        <>
+                        <div className='hidden md:block'>
                           <Separator />
-                          <div>
+                          <div className='mt-2'>
                             <h4 className='text-xs font-semibold mb-2 text-muted-foreground'>
                               Egyéb résztvevők
                             </h4>
@@ -295,7 +261,7 @@ function App() {
                               ))}
                             </div>
                           </div>
-                        </>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
