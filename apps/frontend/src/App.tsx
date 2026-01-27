@@ -103,7 +103,7 @@ function App() {
   }, [currentUser, socket, isAdmin, isUser]);
 
   return (
-    <div className='min-h-dvh bg-gradient-to-br from-zinc-50 to-blue-50 dark:from-zinc-950 dark:to-zinc-900 font-sans'>
+    <div className='min-h-dvh bg-linear-to-br from-zinc-50 to-blue-50 dark:from-zinc-950 dark:to-zinc-900 font-sans'>
       <ErrorDialog message={error} onClose={clearError} />
 
       {!isConnected || !currentUser ? (
@@ -247,10 +247,10 @@ function App() {
                         )}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className='space-y-4'>
+                    <CardContent className='space-y-2'>
                       {/* Voters List */}
                       <div>
-                        <h4 className='text-sm font-semibold mb-2 text-primary'>
+                        <h4 className='text-sm font-semibold text-primary'>
                           Szavazók ({voters.length})
                         </h4>
                         {voters.length === 0 ? (
@@ -279,9 +279,9 @@ function App() {
 
                       {/* Others (Admin/Guest) */}
                       {others.length > 0 && (
-                        <>
+                        <div className='hidden md:block'>
                           <Separator />
-                          <div>
+                          <div className='mt-2'>
                             <h4 className='text-xs font-semibold mb-2 text-muted-foreground'>
                               Egyéb résztvevők
                             </h4>
@@ -296,7 +296,7 @@ function App() {
                               ))}
                             </div>
                           </div>
-                        </>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
