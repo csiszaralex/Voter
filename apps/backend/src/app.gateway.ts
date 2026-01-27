@@ -1,18 +1,18 @@
 import { Logger, UseFilters } from '@nestjs/common';
 import {
-  ConnectedSocket,
-  MessageBody,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
+    ConnectedSocket,
+    MessageBody,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    SubscribeMessage,
+    WebSocketGateway,
+    WebSocketServer,
 } from '@nestjs/websockets';
 import type {
-  AdminLowerHandDto,
-  CastVoteDto,
-  RaiseHandDto,
-  StartVoteDto,
+    AdminLowerHandDto,
+    CastVoteDto,
+    RaiseHandDto,
+    StartVoteDto,
 } from '@repo/shared-types';
 import { UserRole } from '@repo/shared-types';
 import { Server, Socket } from 'socket.io';
@@ -28,31 +28,37 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
   logger = new Logger('AppGateway');
 
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) {
+      this.appService.onStateChange(() => this.broadcastState());
+  }
 
   // --- Connection Lifecycle ---
 
   handleConnection(client: Socket) {
     try {
-      const { username, role } = this.parseConnectionQuery(client);
+      const { username, role, sessionId } = this.parseConnectionQuery(client);
 
       const authClient = client as AuthenticatedSocket;
-      const user = this.appService.joinUser(client.id, username, role);
+      // Pass sessionId if available
+      const { user, sessionId: newSessionId } = this.appService.joinUser(client.id, username, role, sessionId);
       authClient.data.user = user;
 
-      this.logger.log(`User connected: ${user.username} (clientId=${client.id})`);
-      client.emit('welcome', { user });
+      this.logger.log(`User connected: ${user.username} (clientId=${client.id}, sessionId=${newSessionId})`);
+
+      // Send back user AND sessionId
+      client.emit('welcome', { user, sessionId: newSessionId });
       this.broadcastState();
     } catch (error) {
       this.handleConnectionError(client, error);
     }
   }
 
-  private parseConnectionQuery(client: Socket): { username: string; role: UserRole } {
+  private parseConnectionQuery(client: Socket): { username: string; role: UserRole; sessionId?: string } {
     const { query } = client.handshake;
 
     const rawUsername = Array.isArray(query.username) ? query.username[0] : query.username;
     const rawRole = Array.isArray(query.role) ? query.role[0] : query.role;
+    const rawSessionId = Array.isArray(query.sessionId) ? query.sessionId[0] : query.sessionId;
 
     if (!rawUsername) {
       throw new Error('Connection rejected: Username is required.');
@@ -60,7 +66,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const role: UserRole = (rawRole as UserRole) ?? 'USER';
 
-    return { username: rawUsername, role };
+    return { username: rawUsername, role, sessionId: rawSessionId };
   }
 
   private handleConnectionError(client: Socket, error: unknown) {
@@ -80,8 +86,17 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected (clientId=${client.id})`);
-    this.appService.removeUser(client.id);
+    // Use handleDisconnect instead of removeUser
+    this.appService.handleDisconnect(client.id);
     this.broadcastState();
+  }
+
+  @SubscribeMessage('logout')
+  handleLogout(@ConnectedSocket() client: Socket) {
+      this.logger.log(`User requested logout (clientId=${client.id})`);
+      this.appService.logout(client.id);
+      client.disconnect();
+      this.broadcastState();
   }
 
   // --- Helper: Broadcast state to everyone ---
@@ -106,7 +121,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: RaiseHandDto,
   ) {
     this.logger.log(`Toggling hand (${data.type}) for clientId=${client.id}`);
-    this.appService.toggleHand(client.id, data.type);
+    this.appService.toggleHand(client.id, data.type); // Self-toggle uses socket/client.id
     this.broadcastState();
   }
 
@@ -145,6 +160,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @Roles(['ADMIN'], 'Csak adminok engedélyezhetik a kezek leengedését!')
   handleAdminLowerHand(@MessageBody() data: AdminLowerHandDto) {
     this.logger.log(`Admin lowering hand (${data.type}) for targetId=${data.targetId}`);
+    // data.targetId is User.id (UUID)
     this.appService.toggleHand(data.targetId, data.type, true);
     this.broadcastState();
   }
