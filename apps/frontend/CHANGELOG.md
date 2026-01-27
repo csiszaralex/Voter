@@ -1,5 +1,14 @@
 # frontend
 
+## 1.0.9
+
+### Patch Changes
+
+- f04a7ab: Remove global keyboard handler for buttons and add it to button component
+- adc2a54: Improve hand raise UI and add animation for hand raise for admins
+- c50b189: Improve mobile view to hide other users
+- 321c553: Add tooltip for buttons with keyboard shortcut
+
 ## 1.0.8
 
 ### Patch Changes
