@@ -103,7 +103,7 @@ function App() {
   }, [currentUser, socket, isAdmin, isUser]);
 
   return (
-    <div className='min-h-dvh bg-zinc-50 dark:bg-zinc-950 font-sans'>
+    <div className='min-h-dvh bg-gradient-to-br from-zinc-50 to-blue-50 dark:from-zinc-950 dark:to-zinc-900 font-sans'>
       <ErrorDialog message={error} onClose={clearError} />
 
       {!isConnected || !currentUser ? (
@@ -136,8 +136,8 @@ function App() {
                   {(isUser || isGuest || isAdvisor) && (
                     <div className='grid grid-cols-1 gap-3'>
                       <Button
-                        variant={currentUser.hands.topicAt ? 'destructive' : 'default'}
-                        className='h-12 text-lg'
+                        variant={currentUser.hands.topicAt ? 'destructive' : 'outline'}
+                        className={`h-12 text-lg ${currentUser.hands.topicAt ? '' : 'border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/20'}`}
                         onClick={() => socket.emit('raise_hand', { type: 'TOPIC' })}
                       >
                         <Hand className='mr-2 h-5 w-5' />
@@ -145,8 +145,8 @@ function App() {
                       </Button>
 
                       <Button
-                        variant={currentUser.hands.replyAt ? 'destructive' : 'secondary'}
-                        className='h-12'
+                        variant={currentUser.hands.replyAt ? 'destructive' : 'outline'}
+                        className={`h-12 ${currentUser.hands.replyAt ? '' : 'border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20'}`}
                         onClick={() => socket.emit('raise_hand', { type: 'REPLY' })}
                       >
                         <Hand className='mr-2 h-5 w-5' />
@@ -157,6 +157,7 @@ function App() {
                       {isUser && (
                         <Button
                           variant={currentUser.reaction === 'LIKE' ? 'default' : 'outline'}
+                          className={currentUser.reaction === 'LIKE' ? 'bg-green-400 hover:bg-green-500' : ''}
                           onClick={() => socket.emit('toggle_reaction')}
                         >
                           <ThumbsUp

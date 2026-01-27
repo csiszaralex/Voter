@@ -127,3 +127,16 @@
     @apply font-sans;
     }
 }
+
+@keyframes flash-yellow {
+  0% {
+    background-color: oklch(0.95 0.1 85); /* Bright Yellow */
+  }
+  100% {
+    background-color: transparent; /* Or fallback to original bg */
+  }
+}
+
+.animate-flash {
+  animation: flash-yellow 1s ease-out forwards;
+}
