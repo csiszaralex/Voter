@@ -232,10 +232,12 @@ function App() {
                                   u.reaction === 'LIKE'
                                     ? 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600'
                                     : ''
-                                }`}
+                                } ${!u.isConnected ? 'opacity-50 grayscale' : ''}`}
+                                title={!u.isConnected ? 'Kapcsolat megszakadt' : ''}
                               >
                                 {u.username}
                                 {u.reaction === 'LIKE' && ' 👍'}
+                                {!u.isConnected && ' (offline)'}
                               </Badge>
                             ))}
                           </div>
@@ -252,11 +254,16 @@ function App() {
                             </h4>
                             <div className='flex flex-wrap gap-2 opacity-80'>
                               {others.map((u) => (
-                                <Badge key={u.id} variant='outline' className='text-xs py-0.5 px-2'>
+                                <Badge
+                                  key={u.id}
+                                  variant='outline'
+                                  className={`text-xs py-0.5 px-2 ${!u.isConnected ? 'opacity-50 grayscale' : ''}`}
+                                >
                                   {u.username}
                                   {u.role === 'ADMIN' && ' (Admin)'}
                                   {u.role === 'GUEST' && ' (Vendég)'}
                                   {u.role === 'ADVISOR' && ' (Felügyelő)'}
+                                  {!u.isConnected && ' (offline)'}
                                 </Badge>
                               ))}
                             </div>

@@ -98,7 +98,7 @@ export function useGameState() {
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
-    socket.on('welcome', onWelcome); // NEW
+    socket.on('welcome', onWelcome);
     socket.on('state_update', onStateUpdate);
     socket.on('vote_status_update', onVoteStatus);
     socket.on('vote_accepted', onVoteAccepted);
