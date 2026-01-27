@@ -5,33 +5,17 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'; // Shadcn komponens
+} from '@/components/ui/dialog';
 import type { VoteOption, VoteSession } from '@repo/shared-types';
-
-import { useEffect } from 'react';
 
 interface VotingModalProps {
   session: VoteSession | null;
-  hasVoted: boolean; // Ezt a parentben kell kiszámolni: votes.has(mySocketId)
+  hasVoted: boolean;
   onVote: (val: VoteOption) => void;
 }
 
 export function VotingModal({ session, hasVoted, onVote }: VotingModalProps) {
   const isOpen = session?.isActive && !hasVoted;
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (key === 'i') onVote('IGEN');
-      if (key === 'n') onVote('NEM');
-      if (key === 't') onVote('TARTOZKODOM');
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onVote]);
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -46,13 +30,18 @@ export function VotingModal({ session, hasVoted, onVote }: VotingModalProps) {
           <Button
             className='bg-green-600 hover:bg-green-700 text-white'
             onClick={() => onVote('IGEN')}
+            shortcutKey='i'
           >
             IGEN
           </Button>
-          <Button className='bg-red-600 hover:bg-red-700 text-white' onClick={() => onVote('NEM')}>
+          <Button
+            className='bg-red-600 hover:bg-red-700 text-white'
+            onClick={() => onVote('NEM')}
+            shortcutKey='n'
+          >
             NEM
           </Button>
-          <Button variant='secondary' onClick={() => onVote('TARTOZKODOM')}>
+          <Button variant='secondary' onClick={() => onVote('TARTOZKODOM')} shortcutKey='t'>
             TARTÓZKODOM
           </Button>
         </div>

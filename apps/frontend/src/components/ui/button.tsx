@@ -3,6 +3,8 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 import { forwardRef, useEffect, useRef, type RefObject } from 'react';
+import { Kbd, KbdGroup } from './kbd';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 const buttonVariants = cva(
   "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-lg border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]:size-4 inline-flex items-center justify-center whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none",
@@ -45,14 +47,33 @@ type ButtonProps = ButtonPrimitive.Props &
   VariantProps<typeof buttonVariants> & {
     shortcutKey?: string;
     ctrlNeeded?: boolean;
+    tooltip?: string;
   };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant = 'default', size = 'default', shortcutKey, ctrlNeeded = false, ...props },
+    {
+      className,
+      variant = 'default',
+      size = 'default',
+      shortcutKey,
+      ctrlNeeded = false,
+      tooltip,
+      ...props
+    },
     ref,
   ) => {
     const internalRef = useRef<HTMLButtonElement>(null);
+
+    const handleRef = (node: HTMLButtonElement | null) => {
+      internalRef.current = node;
+      if (typeof ref === 'function') {
+        ref(node);
+      } else if (ref) {
+        (ref as RefObject<HTMLButtonElement | null>).current = node;
+      }
+    };
+    const classes = cn(buttonVariants({ variant, size, className }));
 
     useEffect(() => {
       if (!shortcutKey) return;
@@ -76,25 +97,44 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         internalRef.current?.click();
       };
 
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    },[shortcutKey, ctrlNeeded]);
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [shortcutKey, ctrlNeeded]);
+
+    function shortcutString() {
+      const key = shortcutKey?.toLocaleLowerCase();
+      if (key === 'arrowup') return '↑';
+      if (key === 'arrowdown') return '↓';
+      if (key === 'arrowleft') return '←';
+      if (key === 'arrowright') return '→';
+      if (key === ' ') return 'Space';
+      if (key === 'escape') return 'Esc';
+      return shortcutKey?.toLocaleUpperCase();
+    }
+
+    if (!tooltip && !shortcutKey)
+      return <ButtonPrimitive ref={handleRef} data-slot='button' className={classes} {...props} />;
 
     return (
-      <ButtonPrimitive
-        ref={(node) => {
-          const buttonNode = node as HTMLButtonElement | null;
-          internalRef.current = buttonNode;
-          if (typeof ref === "function") {
-            ref(buttonNode);
-          } else if (ref) {
-            (ref as RefObject<HTMLButtonElement | null>).current = buttonNode;
-          }
-        }}
-        data-slot='button'
-        className={cn(buttonVariants({ variant, size, className }))}
-        {...props}
-      />
+      <Tooltip>
+        <TooltipTrigger
+          ref={handleRef}
+          data-slot='button'
+          className={classes}
+          {...(props as React.ComponentProps<'button'>)}
+        >
+          {props.children}
+        </TooltipTrigger>
+        <TooltipContent className='flex items-center gap-2'>
+          {tooltip && <span>{tooltip}</span>}
+          {shortcutKey && (
+            <KbdGroup>
+              {ctrlNeeded && <Kbd>Ctrl</Kbd>}
+              {<Kbd>{shortcutString()}</Kbd>}
+            </KbdGroup>
+          )}
+        </TooltipContent>
+      </Tooltip>
     );
   },
 );
