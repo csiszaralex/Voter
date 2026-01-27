@@ -157,7 +157,7 @@ function App() {
                       {isUser && (
                         <Button
                           variant={currentUser.reaction === 'LIKE' ? 'default' : 'outline'}
-                          className={currentUser.reaction === 'LIKE' ? 'bg-green-400 hover:bg-green-500' : ''}
+                          className={currentUser.reaction === 'LIKE' ? 'bg-green-500 hover:bg-green-600' : ''}
                           onClick={() => socket.emit('toggle_reaction')}
                         >
                           <ThumbsUp

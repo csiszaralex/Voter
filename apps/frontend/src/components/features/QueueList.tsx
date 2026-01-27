@@ -65,7 +65,7 @@ export function QueueList({ users, isAdmin, onLowerHand }: QueueListProps) {
       <div className='space-y-3'>
         {sortedQueue.map((item, index) => (
           <div
-            key={`${item.id}-${item.type}`} // Egyedi kulcs kell!
+            key={`${item.id}-${item.type}`}
             className={`flex items-center justify-between p-3 rounded shadow-sm border ${
               item.type === 'REPLY'
                 ? 'bg-red-50 border-red-100 dark:bg-red-950/30 dark:border-red-900'
