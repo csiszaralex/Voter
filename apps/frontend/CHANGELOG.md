@@ -1,5 +1,12 @@
 # frontend
 
+## 1.1.1
+
+### Patch Changes
+
+- 97e37c6: Separate main components from App.tsx
+- d387a02: Add screen wake function for better UX
+
 ## 1.1.0
 
 ### Minor Changes
