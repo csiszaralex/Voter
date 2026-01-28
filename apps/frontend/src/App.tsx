@@ -9,6 +9,7 @@ import { VotingModal } from '@/components/features/VotingModal';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGameState } from '@/hooks/useGameState';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import type { VoteOption } from '@repo/shared-types';
 import { useEffect, useState } from 'react';
 
@@ -39,6 +40,8 @@ function App() {
       };
     }
   }, [lastVoteResult]);
+
+  useWakeLock(!!currentUser);
 
   useEffect(() => {
     if (currentUser) {
