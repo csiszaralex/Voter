@@ -185,7 +185,7 @@ export class AppService {
   toggleReaction(socketId: string) {
     const session = this.getSessionBySocketId(socketId);
     if (session) {
-      console.log('Toggling reaction for', session.user.username);
+      this.logger.log('Toggling reaction for', session.user.username);
       session.user.reaction = session.user.reaction === 'LIKE' ? null : 'LIKE';
     }
   }
