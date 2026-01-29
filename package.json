@@ -7,9 +7,11 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "ci:publish": "changeset tag && git push origin --tags",
     "prepare": "husky",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "change": "changeset",
+    "version": "changeset version",
+    "ci:publish": "changeset tag && git push origin --tags"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
@@ -25,3 +27,4 @@
     "node": ">=18"
   }
 }
+
