@@ -1,5 +1,12 @@
 # backend
 
+## 1.2.1
+
+### Patch Changes
+
+- 6b49bd6: - Add testing packages and configs
+  - Add testing files
+
 ## 1.2.0
 
 ### Minor Changes
