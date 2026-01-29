@@ -33,18 +33,23 @@ export class AppService {
   constructor(private configService: AppConfigService) {}
 
   onStateChange(callback: () => void) {
-      this.stateChangeCallback = callback;
+    this.stateChangeCallback = callback;
   }
 
   private notifyStateChange() {
-      if (this.stateChangeCallback) {
-          this.stateChangeCallback();
-      }
+    if (this.stateChangeCallback) {
+      this.stateChangeCallback();
+    }
   }
 
   // --- User Management ---
 
-  joinUser(socketId: string, username: string, role: UserRole, existingSessionId?: string): { user: User; sessionId: string } {
+  joinUser(
+    socketId: string,
+    username: string,
+    role: UserRole,
+    existingSessionId?: string,
+  ): { user: User; sessionId: string } {
     let session: UserSession | undefined;
 
     // 1. Try to restore session
@@ -60,9 +65,9 @@ export class AppService {
 
     // 2. If no session, create new
     if (!session) {
-       // Case-insensitive name check
-       const isTaken = Array.from(this.sessions.values()).some(
-        (s) => s.user.username.toLowerCase() === username.toLowerCase()
+      // Case-insensitive name check
+      const isTaken = Array.from(this.sessions.values()).some(
+        (s) => s.user.username.toLowerCase() === username.toLowerCase(),
       );
 
       if (isTaken) {
@@ -154,10 +159,10 @@ export class AppService {
 
     // Remove Socket Mapping (if exists)
     if (session.socketId) {
-        this.socketToSessionId.delete(session.socketId);
-        // Note: We can't easily disconnect the socket here without the Gateway server instance,
-        // but usually logout is triggered by client or cleanup.
-        // If cleanup, socket is already gone.
+      this.socketToSessionId.delete(session.socketId);
+      // Note: We can't easily disconnect the socket here without the Gateway server instance,
+      // but usually logout is triggered by client or cleanup.
+      // If cleanup, socket is already gone.
     }
 
     this.sessions.delete(sessionId);
@@ -165,7 +170,7 @@ export class AppService {
   }
 
   getAllUsers(): User[] {
-    return Array.from(this.sessions.values()).map(s => s.user);
+    return Array.from(this.sessions.values()).map((s) => s.user);
   }
 
   getUserBySocketId(socketId: string): User | undefined {
@@ -185,14 +190,16 @@ export class AppService {
   toggleReaction(socketId: string) {
     const session = this.getSessionBySocketId(socketId);
     if (session) {
-      console.log('Toggling reaction for', session.user.username);
+      this.logger.log('Toggling reaction for', session.user.username);
       session.user.reaction = session.user.reaction === 'LIKE' ? null : 'LIKE';
     }
   }
 
   clearReactions(targetUsername?: string) {
     if (targetUsername) {
-      const session = Array.from(this.sessions.values()).find((s) => s.user.username === targetUsername);
+      const session = Array.from(this.sessions.values()).find(
+        (s) => s.user.username === targetUsername,
+      );
       if (session) session.user.reaction = null;
     } else {
       this.sessions.forEach((s) => (s.user.reaction = null));
@@ -205,36 +212,36 @@ export class AppService {
     // NEW: targetId is userId (stable UUID).
     // We need to find session by userId.
 
-    const session = Array.from(this.sessions.values()).find(s => s.user.id === targetId);
+    const session = Array.from(this.sessions.values()).find((s) => s.user.id === targetId);
 
     // Fallback: Check if targetId matches a socketId (for compatibility or if frontend sends socketId?)
     // But frontend receives User object with id=UUID, so it should send UUID.
 
     if (!session) {
-        // Try strict lookup by socketId just in case (e.g. self-action uses socketId?)
-        // Actually, for "Raise Hand" (self), the Gateway passes client.id.
-        // So for "self" actions, targetId might be socketId.
-        // But for "admin_lower_hand", targetId is the User.id.
-        // I need to handle both?
+      // Try strict lookup by socketId just in case (e.g. self-action uses socketId?)
+      // Actually, for "Raise Hand" (self), the Gateway passes client.id.
+      // So for "self" actions, targetId might be socketId.
+      // But for "admin_lower_hand", targetId is the User.id.
+      // I need to handle both?
 
-        // Let's assume:
-        // If it's a UUID (User.id) -> find by user.id
-        // If NOT found, maybe it's a socketId? -> find by socketToSession
+      // Let's assume:
+      // If it's a UUID (User.id) -> find by user.id
+      // If NOT found, maybe it's a socketId? -> find by socketToSession
 
-        // Simpler: Gateway resolves "client.id" to "User" before calling this?
-        // No, Gateway calls `this.appService.toggleHand(client.id, ...)` for self.
-        // And `this.appService.toggleHand(data.targetId, ...)` for admin.
+      // Simpler: Gateway resolves "client.id" to "User" before calling this?
+      // No, Gateway calls `this.appService.toggleHand(client.id, ...)` for self.
+      // And `this.appService.toggleHand(data.targetId, ...)` for admin.
 
-        // So I need to support BOTH?
-        // Or I refactor Gateway to resolve user first?
-        // I will keep logic inside Service to be robust.
+      // So I need to support BOTH?
+      // Or I refactor Gateway to resolve user first?
+      // I will keep logic inside Service to be robust.
 
-        const sessionBySocket = this.getSessionBySocketId(targetId);
-        if (sessionBySocket) {
-             this.toggleHandInternal(sessionBySocket.user, type, forceLower);
-             return;
-        }
+      const sessionBySocket = this.getSessionBySocketId(targetId);
+      if (sessionBySocket) {
+        this.toggleHandInternal(sessionBySocket.user, type, forceLower);
         return;
+      }
+      return;
     }
 
     this.toggleHandInternal(session.user, type, forceLower);
@@ -259,7 +266,9 @@ export class AppService {
   startVote(isAnonymous: boolean) {
     // Count connected users? Or all users?
     // "active voters" -> usually present.
-    const voterCount = Array.from(this.sessions.values()).filter((s) => s.user.role === 'USER' && s.user.isConnected).length;
+    const voterCount = Array.from(this.sessions.values()).filter(
+      (s) => s.user.role === 'USER' && s.user.isConnected,
+    ).length;
 
     if (voterCount < 1) {
       throw new Error('Nincs jelen szavazóképes felhasználó, így nem indítható szavazás.');
@@ -282,10 +291,12 @@ export class AppService {
   }
 
   getVoteSession(): VoteSession {
-     // Active voters -> connected users only?
-     // Or we allow disconnected users to "count" as potential voters?
-     // Usually, only connected users can vote.
-    const voterCount = Array.from(this.sessions.values()).filter((s) => s.user.role === 'USER' && s.user.isConnected).length;
+    // Active voters -> connected users only?
+    // Or we allow disconnected users to "count" as potential voters?
+    // Usually, only connected users can vote.
+    const voterCount = Array.from(this.sessions.values()).filter(
+      (s) => s.user.role === 'USER' && s.user.isConnected,
+    ).length;
     return {
       isActive: this.voteConfig.isActive,
       isAnonymous: this.voteConfig.isAnonymous,
@@ -308,10 +319,10 @@ export class AppService {
 
       // Find user for details
       if (!this.voteConfig.isAnonymous) {
-         const session = Array.from(this.sessions.values()).find(s => s.user.id === userId);
-         if (session) {
-             details.push({ username: session.user.username, vote });
-         }
+        const session = Array.from(this.sessions.values()).find((s) => s.user.id === userId);
+        if (session) {
+          details.push({ username: session.user.username, vote });
+        }
       }
     });
 

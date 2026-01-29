@@ -1,18 +1,18 @@
 import { Logger, UseFilters } from '@nestjs/common';
 import {
-    ConnectedSocket,
-    MessageBody,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
-    SubscribeMessage,
-    WebSocketGateway,
-    WebSocketServer,
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import type {
-    AdminLowerHandDto,
-    CastVoteDto,
-    RaiseHandDto,
-    StartVoteDto,
+  AdminLowerHandDto,
+  CastVoteDto,
+  RaiseHandDto,
+  StartVoteDto,
 } from '@repo/shared-types';
 import { UserRole } from '@repo/shared-types';
 import { Server, Socket } from 'socket.io';
@@ -29,7 +29,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   logger = new Logger('AppGateway');
 
   constructor(private readonly appService: AppService) {
-      this.appService.onStateChange(() => this.broadcastState());
+    this.appService.onStateChange(() => this.broadcastState());
   }
 
   // --- Connection Lifecycle ---
@@ -40,10 +40,17 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const authClient = client as AuthenticatedSocket;
       // Pass sessionId if available
-      const { user, sessionId: newSessionId } = this.appService.joinUser(client.id, username, role, sessionId);
+      const { user, sessionId: newSessionId } = this.appService.joinUser(
+        client.id,
+        username,
+        role,
+        sessionId,
+      );
       authClient.data.user = user;
 
-      this.logger.log(`User connected: ${user.username} (clientId=${client.id}, sessionId=${newSessionId})`);
+      this.logger.log(
+        `User connected: ${user.username} (clientId=${client.id}, sessionId=${newSessionId})`,
+      );
 
       // Send back user AND sessionId
       client.emit('welcome', { user, sessionId: newSessionId });
@@ -53,7 +60,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  private parseConnectionQuery(client: Socket): { username: string; role: UserRole; sessionId?: string } {
+  private parseConnectionQuery(client: Socket): {
+    username: string;
+    role: UserRole;
+    sessionId?: string;
+  } {
     const { query } = client.handshake;
 
     const rawUsername = Array.isArray(query.username) ? query.username[0] : query.username;
@@ -93,10 +104,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('logout')
   handleLogout(@ConnectedSocket() client: Socket) {
-      this.logger.log(`User requested logout (clientId=${client.id})`);
-      this.appService.logout(client.id);
-      client.disconnect();
-      this.broadcastState();
+    this.logger.log(`User requested logout (clientId=${client.id})`);
+    this.appService.logout(client.id);
+    client.disconnect();
+    this.broadcastState();
   }
 
   // --- Helper: Broadcast state to everyone ---
